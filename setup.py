@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from src._version import __version__
+from eduhelx_utils._version import __version__
 
 setup(
     name="eduhelx-utils",
