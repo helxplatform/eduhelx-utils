@@ -6,6 +6,7 @@ import jwt
 import time
 import httpx
 from .git import get_commit_info
+from ._version import __version__
 
 class APIException(Exception):
     def __init__(self, response, message):
@@ -38,7 +39,7 @@ class Api:
         self.client = httpx.AsyncClient(
             base_url=f"{ self.api_url }api/v1/",
             headers={
-                "User-Agent": f"eduhelx_utils"
+                "User-Agent": f"eduhelx_utils/{__version__}"
             }
         )
 

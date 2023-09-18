@@ -4,7 +4,6 @@ Note that error handling here is not reliable, this should be rewritten probably
 """
 
 import re
-from typing import List, Tuple
 from .process import execute
 
 class GitException(Exception):
@@ -86,7 +85,7 @@ def add_remote(remote_name: str, remote_url: str, path="./"):
     if err != "":
         raise InvalidGitRepositoryException()
 
-def stage_files(files: str | List[str], path="./") -> List[Tuple[str,]]:
+def stage_files(files: str | list[str], path="./") -> list[tuple[str,]]:
     if isinstance(files, str): files = [files]
 
     (out, err, exit_code) = execute(["git", "add", "--verbose", *files], cwd=path)
