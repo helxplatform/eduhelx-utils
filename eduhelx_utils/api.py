@@ -1,5 +1,7 @@
 """
 An API wrapper for the Eduhelx Grader API.
+
+Refer to Grader API /docs for full documentation on API endpoints.
 """
 
 import jwt
@@ -61,6 +63,8 @@ class Api:
         self._refresh_token = value
         self.refresh_token_exp = jwt.decode(self._refresh_token, options={"verify_signature": False})["exp"]
 
+
+    """ Internal """
     async def _ensure_access_token(self):
         if (
             self.refresh_token is None
@@ -114,17 +118,10 @@ class Api:
     
     async def _delete(self, endpoint: str, **kwargs):
         return await self._make_request("DELETE", endpoint, **kwargs)
-
-    async def _refresh_access_token(self):
-        try:
-            self.access_token = await self._post("refresh", verify_credentials=False, json={
-                "refresh_token": self.refresh_token
-            })
-        except:
-            self.access_token = None
-            self.refresh_token = None
             
 
+    """ Auth """
+    # This is an API endpoint; it is marked as private because auth is handled internally.
     async def _login(self):
         res = await self._post("login", verify_credentials=False, json={
             "onyen": self.user_onyen,
@@ -133,15 +130,81 @@ class Api:
         self.access_token = res.get("access_token")
         self.refresh_token = res.get("refresh_token")
 
-    async def get_assignments(self):
-        return await self._get("assignments/self")
+    # This is an API endpoint; it is marked as private because auth is handled internally.
+    async def _refresh_access_token(self):
+        try:
+            self.access_token = await self._post("refresh", verify_credentials=False, json={
+                "refresh_token": self.refresh_token
+            })
+        except:
+            self.access_token = None
+            self.refresh_token = None
 
+    async def get_my_role(self):
+        return await self._get("role/self")
+    
+
+    """ Submissions """
+    async def get_my_submissions(self, assignment_id: int):
+        return await self._get("submissions/self", params={
+            "assignment_id": assignment_id
+        })
+    
+    async def get_latest_submission(self, onyen: str, assignment_id: int):
+        return await self._get("latest_submission", params={
+            "onyen": onyen,
+            "assignment_id": assignment_id
+        })
+
+    async def create_submission(self, assignment_id: str, commit_id: str):
+        return await self._post("submission", json={
+            "assignment_id": assignment_id,
+            "commit_id": commit_id
+        })
+    
+    
+    """ Assignments """
+    async def get_my_assignments(self):
+        return await self._get("assignments/self")
+    
+    
+    """ Users """
+    async def get_my_user(self):
+        return await self._get("student/self")
+    
+    
+    """ Students """
+    async def get_student(self, onyen: str):
+        return await self._get(f"student/{onyen}")
+    
+    async def create_student(self, onyen: str, first_name: str, last_name: str, email: str):
+        return await self._post("student", json={
+            "onyen": onyen,
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email
+        })
+    
+
+    """ Instructors """
+    async def get_instructor(self, onyen: str):
+        return await self._get(f"instructor/{onyen}")
+    
+    async def create_instructor(self, onyen: str, first_name: str, last_name: str, email: str):
+        return await self._post("instructor", json={
+            "onyen": onyen,
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email
+        })
+    
+    
+    """ Course """
     async def get_course(self):
         return await self._get("course")
+    
 
-    async def get_student(self):
-        return await self._get("student/self")
-
+    """
     async def get_assignment_submissions(self, assignment_id: int, git_path="./"):
         submissions = await self._get("submissions/self", params={
             "assignment_id": assignment_id
@@ -150,9 +213,4 @@ class Api:
             submission["commit"] = get_commit_info(submission["commit_id"], path=git_path)
         
         return submissions
-
-    async def post_submission(self, assignment_id: str, commit_id: str):
-        return await self._post("submission", json={
-            "assignment_id": assignment_id,
-            "commit_id": commit_id
-        })
+    """
