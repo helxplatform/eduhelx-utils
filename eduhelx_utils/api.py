@@ -167,6 +167,9 @@ class Api:
     async def get_my_assignments(self):
         return await self._get("assignments/self")
     
+    async def update_assignment(self):
+        ...
+    
     
     """ Users """
     async def get_my_user(self):
@@ -176,6 +179,9 @@ class Api:
     """ Students """
     async def get_student(self, onyen: str):
         return await self._get(f"student/{onyen}")
+    
+    async def list_students(self):
+        return await self._get("students")
     
     async def create_student(self, onyen: str, first_name: str, last_name: str, email: str):
         return await self._post("student", json={
@@ -189,6 +195,9 @@ class Api:
     """ Instructors """
     async def get_instructor(self, onyen: str):
         return await self._get(f"instructor/{onyen}")
+    
+    async def list_instructors(self):
+        return await self._get("instructors")
     
     async def create_instructor(self, onyen: str, first_name: str, last_name: str, email: str):
         return await self._post("instructor", json={
