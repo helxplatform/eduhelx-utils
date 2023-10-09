@@ -7,7 +7,6 @@ Refer to Grader API /docs for full documentation on API endpoints.
 import jwt
 import time
 import httpx
-from .git import get_commit_info
 from ._version import __version__
 
 class APIException(Exception):
@@ -167,8 +166,8 @@ class Api:
     async def get_my_assignments(self):
         return await self._get("assignments/self")
     
-    async def update_assignment(self):
-        ...
+    async def update_assignment(self, name: str, **patch_fields):
+        return await self._patch(f"assignment/{name}", json=patch_fields)
     
     
     """ Users """
@@ -211,15 +210,3 @@ class Api:
     """ Course """
     async def get_course(self):
         return await self._get("course")
-    
-
-    """
-    async def get_assignment_submissions(self, assignment_id: int, git_path="./"):
-        submissions = await self._get("submissions/self", params={
-            "assignment_id": assignment_id
-        })
-        for submission in submissions:
-            submission["commit"] = get_commit_info(submission["commit_id"], path=git_path)
-        
-        return submissions
-    """
