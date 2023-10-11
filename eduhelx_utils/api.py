@@ -38,7 +38,7 @@ class Api:
         self._refresh_token = None
         self.refresh_token_exp = None
         self.client = httpx.AsyncClient(
-            base_url=f"{ self.api_url }api/v1/",
+            base_url=f"{ self.api_url }{ '/' if not self.api_url.endswith('/') else '' }api/v1/",
             headers={
                 "User-Agent": f"eduhelx_utils/{__version__}"
             }
