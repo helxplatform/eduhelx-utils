@@ -51,7 +51,10 @@ class Api:
     @access_token.setter
     def access_token(self, value: str | None):
         self._access_token = value
-        self.access_token_exp = jwt.decode(self._access_token, options={"verify_signature": False})["exp"]
+        if value is not None:
+            self.access_token_exp = jwt.decode(self._access_token, options={"verify_signature": False})["exp"]
+        else:
+            self.access_token_exp = None
 
     @property
     def refresh_token(self) -> str | None:
@@ -60,7 +63,10 @@ class Api:
     @refresh_token.setter
     def refresh_token(self, value: str | None):
         self._refresh_token = value
-        self.refresh_token_exp = jwt.decode(self._refresh_token, options={"verify_signature": False})["exp"]
+        if value is not None:
+            self.refresh_token_exp = jwt.decode(self._refresh_token, options={"verify_signature": False})["exp"]
+        else:
+            self.refresh_token_exp = None
 
 
     """ Internal """
