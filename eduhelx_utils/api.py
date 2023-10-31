@@ -14,6 +14,14 @@ class APIException(Exception):
         super().__init__(message)
         self.response = response
 
+    @property
+    def data(self):
+        return self.response.json()
+
+    @property
+    def error_code(self) -> str:
+        return self.data["error_code"]
+
 class UnauthorizedException(APIException):
     pass
 
