@@ -188,6 +188,9 @@ class Api:
     async def get_my_user(self):
         return await self._get("users/self")
     
+    async def get_ldap_user_info(self, pid: str):
+        return await self._get(f"users/{pid}/ldap")
+    
     
     """ Students """
     async def get_student(self, onyen: str):
