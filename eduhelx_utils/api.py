@@ -170,7 +170,7 @@ class Api:
         })
 
     async def create_submission(self, assignment_id: str, commit_id: str):
-        return await self._post("submission", json={
+        return await self._post("submissions", json={
             "assignment_id": assignment_id,
             "commit_id": commit_id
         })
@@ -181,23 +181,23 @@ class Api:
         return await self._get("assignments/self")
     
     async def update_assignment(self, name: str, **patch_fields):
-        return await self._patch(f"assignment/{name}", json=patch_fields)
+        return await self._patch(f"assignments/{name}", json=patch_fields)
     
     
     """ Users """
     async def get_my_user(self):
-        return await self._get("student/self")
+        return await self._get("users/self")
     
     
     """ Students """
     async def get_student(self, onyen: str):
-        return await self._get(f"student/{onyen}")
+        return await self._get(f"students/{onyen}")
     
     async def list_students(self):
         return await self._get("students")
     
     async def create_student(self, onyen: str, first_name: str, last_name: str, email: str):
-        return await self._post("student", json={
+        return await self._post("students", json={
             "onyen": onyen,
             "first_name": first_name,
             "last_name": last_name,
@@ -207,13 +207,13 @@ class Api:
 
     """ Instructors """
     async def get_instructor(self, onyen: str):
-        return await self._get(f"instructor/{onyen}")
+        return await self._get(f"instructors/{onyen}")
     
     async def list_instructors(self):
         return await self._get("instructors")
     
     async def create_instructor(self, onyen: str, first_name: str, last_name: str, email: str):
-        return await self._post("instructor", json={
+        return await self._post("instructors", json={
             "onyen": onyen,
             "first_name": first_name,
             "last_name": last_name,
