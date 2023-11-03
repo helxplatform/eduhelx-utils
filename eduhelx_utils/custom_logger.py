@@ -90,7 +90,18 @@ class CustomizeLogger:
             _logger.handlers = [InterceptHandler()]
 
         return logger.bind(request_id=None, method=None)
+    
+    def set_log_level(logger, level: str):
+        logger.remove()
+        logger.add(
+            sys.stdout,
+            enqueue=True,
+            backtrace=True,
+            level=level.upper(),
+            format="{time} {level} {message}"
+        )
 
+        return logger
 
     @classmethod
     def load_logging_config(cls, config_path):
