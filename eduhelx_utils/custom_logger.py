@@ -90,6 +90,10 @@ class CustomizeLogger:
             _logger.handlers = [InterceptHandler()]
 
         return logger.bind(request_id=None, method=None)
+    
+    @classmethod
+    def change_log_level(level: str):
+        logger.level = level
 
 
     @classmethod
