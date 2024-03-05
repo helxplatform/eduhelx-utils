@@ -94,6 +94,23 @@ def stage_files(files: str | list[str], path="./") -> list[tuple[str,]]:
 
     return [line.split(" ", 1) for line in out.splitlines()]
 
+# This is named `paths` since git status may return untracked directories as well as files.
+def get_modified_paths(path="./") -> list[str]:
+    (out, err, exit_code) = execute(["git", "status", "--porcelain=v1"], cwd=path)
+    changed_files = []
+    for line in out.splitlines():
+        line = line.strip()
+        directory = line.endswith("/")
+        (modification_type, relative_path) = line.split(" ")
+        changed_files.append({
+            # Relative to repository root.
+            "path": relative_path,
+            "modification_type": modification_type,
+            "type": "directory" if directory else "file"
+        })
+    return changed_files
+
+
 def commit(summary: str, description: str | None = None, path="./") -> str:
     description_args = ["-m", description] if description is not None else []
     (out, err, exit_code) = execute(["git", "commit", "--allow-empty", "-m", summary, *description_args], cwd=path)
