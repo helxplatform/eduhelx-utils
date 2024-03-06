@@ -95,8 +95,10 @@ def stage_files(files: str | list[str], path="./") -> list[tuple[str,]]:
     return [line.split(" ", 1) for line in out.splitlines()]
 
 # This is named `paths` since git status may return untracked directories as well as files.
-def get_modified_paths(path="./") -> list[str]:
-    (out, err, exit_code) = execute(["git", "status", "--porcelain=v1"], cwd=path)
+def get_modified_paths(untracked=False, path="./") -> list[str]:
+    args = ["git", "status", "--porcelain=v1"]
+    if untracked: args.append("-u")
+    (out, err, exit_code) = execute(args, cwd=path)
     changed_files = []
     for line in out.splitlines():
         line = line.strip()
