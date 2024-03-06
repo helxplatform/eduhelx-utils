@@ -104,6 +104,11 @@ def get_modified_paths(untracked=False, path="./") -> list[str]:
         line = line.strip()
         directory = line.endswith("/")
         (modification_type, relative_path) = line.split(" ", maxsplit=1)
+        
+        relative_path = relative_path.strip()
+        if relative_path.startswith('"'): relative_path = relative_path[1:]
+        if relative_path.endswith('"'): relative_path = relative_path[:-1]
+        
         changed_files.append({
             # Relative to repository root.
             "path": relative_path,
