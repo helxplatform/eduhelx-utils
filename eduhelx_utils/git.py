@@ -61,15 +61,15 @@ def get_tail_commit_id(path="./") -> str:
         raise InvalidGitRepositoryException()
     return out
     
-def clone_repository(remote: str, path="./"):
-    (out, err, exit_code) = execute(["git", "clone", remote, path])
+def clone_repository(remote_url: str, remote_name="origin", path="./"):
+    (out, err, exit_code) = execute(["git", "clone", remote_url, path, "--origin", remote_name])
     # Git clone outputs human-useful information to stderr.
     last_line = err.split("\n")[-1]
     if last_line.startswith("fatal:"):
         raise GitException(last_line)
 
-def get_repo_name(path="./") -> str:
-    (out, err, exit_code) = execute(["git", "config", "--get", "remote.origin.url"], cwd=path)
+def get_repo_name(remote_name="origin", path="./") -> str:
+    (out, err, exit_code) = execute(["git", "config", "--get", f"remote.{remote_name}.url"], cwd=path)
     if out == "" or err != "":
         raise InvalidGitRepositoryException()
     # Technically, a git remote URL can contain quotes, so it could break out of the quotations around `out`.
