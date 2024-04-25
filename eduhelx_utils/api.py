@@ -162,6 +162,11 @@ class Api:
         return await self._get("submissions/self", params={
             "assignment_id": assignment_id
         })
+    async def get_submissions(self, assignment_id: int, student_onyen: str | None=None):
+        return await self._get("submissions", params={
+            "assignment_id": assignment_id,
+            "student_onyen": student_onyen
+        })
     
     async def get_latest_submission(self, onyen: str, assignment_id: int):
         return await self._get("latest_submission", params={
