@@ -81,7 +81,9 @@ def checkout(branch_name: str, new_branch=False, path="./"):
     (out, err, exit_code) = execute([
         i for i in ["git", "checkout", "-b" if new_branch else None, branch_name] if i is not None
     ], cwd=path)
-    if err.startswith("fatal: not a git repository"):
+    if err.startswith("Switched"):
+        return
+    elif err.startswith("fatal: not a git repository"):
         raise InvalidGitRepositoryException()
     else:
         raise GitException(err)
