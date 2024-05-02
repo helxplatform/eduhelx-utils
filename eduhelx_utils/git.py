@@ -71,8 +71,8 @@ def clone_repository(remote_url: str, remote_name="origin", path="./"):
 def init_repository(path="./"):
     (out, err, exit_code) = execute(["git", "init"], cwd=path)
 
-def fetch_repository(remote_url: str, path="./"):
-    (out, err, exit_code) = execute(["git", "fetch", remote_url], cwd=path)
+def fetch_repository(remote_url_or_name: str, path="./"):
+    (out, err, exit_code) = execute(["git", "fetch", remote_url_or_name], cwd=path)
     last_line = err.split("\n")[-1]
     if last_line.startswith("fatal:"):
         raise GitException(last_line)
