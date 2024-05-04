@@ -114,6 +114,13 @@ def stage_files(files: str | list[str], path="./") -> list[tuple[str,]]:
 
     return [line.split(" ", 1) for line in out.splitlines()]
 
+def reset(files: str | list[str], path="./") -> None:
+    if isinstance(files, str): files = [files]
+
+    (out, err, exit_code) = execute(["git", "reset", *files], cwd=path)
+    if err != "":
+        raise InvalidGitRepositoryException()
+
 # This is named `paths` since git status may return untracked directories as well as files when untracked=False.
 def get_modified_paths(untracked=False, path="./") -> list[str]:
     args = ["git", "status", "--porcelain=v1"]
@@ -153,6 +160,8 @@ def commit(summary: str, description: str | None = None, path="./") -> str:
 
 def push(remote_name: str, branch_name: str, path="./"):
     (out, err, exit_code) = execute(["git", "push", remote_name, branch_name], cwd=path)
-    if exit_code != 0:
+    if err.startswith("fatal: not a git repository"):
         raise InvalidGitRepositoryException()
+    elif err.startswith("fatal:"):
+        raise GitException(err)
     
