@@ -73,9 +73,8 @@ def init_repository(path="./"):
 
 def fetch_repository(remote_url_or_name: str, path="./"):
     (out, err, exit_code) = execute(["git", "fetch", remote_url_or_name], cwd=path)
-    last_line = err.split("\n")[-1]
-    if last_line.startswith("fatal:"):
-        raise GitException(last_line)
+    if err.startswith("fatal:"):
+        raise GitException(err)
     
 def checkout(branch_name: str, new_branch=False, path="./"):
     (out, err, exit_code) = execute([
