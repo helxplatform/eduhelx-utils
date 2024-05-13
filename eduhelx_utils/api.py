@@ -213,6 +213,8 @@ class Api:
             "email": email
         })
     
+    async def mark_my_fork_as_cloned(self):
+        return await self._put("students/self/fork_cloned")
 
     """ Instructors """
     async def get_instructor(self, onyen: str):
