@@ -68,6 +68,25 @@ def clone_repository(remote_url: str, remote_name="origin", path="./"):
     if last_line.startswith("fatal:"):
         raise GitException(last_line)
 
+def init_repository(path="./"):
+    (out, err, exit_code) = execute(["git", "init"], cwd=path)
+
+def fetch_repository(remote_url_or_name: str, path="./"):
+    (out, err, exit_code) = execute(["git", "fetch", remote_url_or_name], cwd=path)
+    if err.startswith("fatal:"):
+        raise GitException(err)
+    
+def checkout(branch_name: str, new_branch=False, path="./"):
+    (out, err, exit_code) = execute([
+        i for i in ["git", "checkout", "-b" if new_branch else None, branch_name] if i is not None
+    ], cwd=path)
+    if err.startswith("Switched"):
+        return
+    elif err.startswith("fatal: not a git repository"):
+        raise InvalidGitRepositoryException()
+    else:
+        raise GitException(err)
+
 def get_repo_name(remote_name="origin", path="./") -> str:
     (out, err, exit_code) = execute(["git", "config", "--get", f"remote.{remote_name}.url"], cwd=path)
     if out == "" or err != "":
@@ -93,6 +112,13 @@ def stage_files(files: str | list[str], path="./") -> list[tuple[str,]]:
         raise InvalidGitRepositoryException()
 
     return [line.split(" ", 1) for line in out.splitlines()]
+
+def reset(files: str | list[str], path="./") -> None:
+    if isinstance(files, str): files = [files]
+
+    (out, err, exit_code) = execute(["git", "reset", *files], cwd=path)
+    if err != "":
+        raise InvalidGitRepositoryException()
 
 # This is named `paths` since git status may return untracked directories as well as files when untracked=False.
 def get_modified_paths(untracked=False, path="./") -> list[str]:
@@ -133,5 +159,8 @@ def commit(summary: str, description: str | None = None, path="./") -> str:
 
 def push(remote_name: str, branch_name: str, path="./"):
     (out, err, exit_code) = execute(["git", "push", remote_name, branch_name], cwd=path)
-    if exit_code != 0:
+    if err.startswith("fatal: not a git repository"):
         raise InvalidGitRepositoryException()
+    elif err.startswith("fatal:"):
+        raise GitException(err)
+    

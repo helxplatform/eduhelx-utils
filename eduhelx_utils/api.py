@@ -33,12 +33,21 @@ class Api:
             self,
             api_url: str,
             user_onyen: str,
-            user_autogen_password: str,
+            # Uses appstore auth if None
+            user_autogen_password: str = None,
+            # "student" | "instructor"
+            appstore_auth: str = None,
+            appstore_sessionid: str = None,
             jwt_refresh_leeway_seconds: int = 60
         ):
+        if (appstore_auth is None) ^ (appstore_sessionid is None):
+            raise ValueError("appstore_auth and appstore_sessionid must both be defined or both None")
+        
         self.api_url = api_url
         self.user_onyen = user_onyen
         self.user_autogen_password = user_autogen_password
+        self.appstore_auth = appstore_auth
+        self.appstore_sessionid = appstore_sessionid
         self.jwt_refresh_leeway_seconds = jwt_refresh_leeway_seconds
 
         self._access_token = None
@@ -136,10 +145,15 @@ class Api:
     """ Auth """
     # This is an API endpoint; it is marked as private because auth is handled internally.
     async def _login(self):
-        res = await self._post("login", verify_credentials=False, json={
-            "onyen": self.user_onyen,
-            "autogen_password": self.user_autogen_password
-        })
+        if self.appstore_sessionid is None:
+            res = await self._post("login", verify_credentials=False, json={
+                "onyen": self.user_onyen,
+                "autogen_password": self.user_autogen_password
+            })
+        else:
+            res = await self._post("login/appstore", verify_credentials=False, json={
+                "user_type": self.appstore_auth
+            }, headers={ "Cookie": f"sessionid={ self.appstore_sessionid }" })
         self.access_token = res.get("access_token")
         self.refresh_token = res.get("refresh_token")
 
@@ -213,6 +227,8 @@ class Api:
             "email": email
         })
     
+    async def mark_my_fork_as_cloned(self):
+        return await self._put("students/self/fork_cloned")
 
     """ Instructors """
     async def get_instructor(self, onyen: str):
