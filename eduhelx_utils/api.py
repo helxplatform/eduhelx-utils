@@ -152,7 +152,6 @@ class Api:
             })
         else:
             res = await self._post("login/appstore", verify_credentials=False, json={
-                "onyen": self.user_onyen,
                 "user_type": self.appstore_auth
             }, headers={ "Cookie": f"sessionid={ self.appstore_sessionid }" })
         self.access_token = res.get("access_token")
