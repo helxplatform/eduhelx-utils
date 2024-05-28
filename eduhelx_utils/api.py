@@ -170,6 +170,12 @@ class Api:
     async def get_my_role(self):
         return await self._get("role/self")
     
+    async def set_ssh_key(self, name: str, key: str):
+        return await self._put("login/gitea/ssh", json={
+            "name": name,
+            "key": key
+        })
+    
 
     """ Submissions """
     async def get_my_submissions(self, assignment_id: int):
