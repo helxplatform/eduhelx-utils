@@ -153,7 +153,7 @@ class Api:
                 "autogen_password": self.user_autogen_password
             })
         elif self.auth_type in (AuthType.APPSTORE_INSTRUCTOR, AuthType.APPSTORE_STUDENT):
-            _, user_type = self.auth_type.split(":")
+            _, user_type = self.auth_type.value.split(":")
             res = await self._post("login/appstore", verify_credentials=False, json={
                 "user_type": user_type
             }, headers={ "Authorization": f"Bearer { self.appstore_access_token }" })
