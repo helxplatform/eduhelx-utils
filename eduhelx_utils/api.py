@@ -7,7 +7,13 @@ Refer to Grader API /docs for full documentation on API endpoints.
 import jwt
 import time
 import httpx
+from enum import Enum
 from ._version import __version__
+
+class AuthType(Enum):
+    APPSTORE_INSTRUCTOR = "appstore:instructor"
+    APPSTORE_STUDENT = "appstore:student"
+    PASSWORD = "password"
 
 class APIException(Exception):
     def __init__(self, response, message):
@@ -35,19 +41,15 @@ class Api:
             user_onyen: str,
             # Uses appstore auth if None
             user_autogen_password: str = None,
-            # "student" | "instructor"
-            appstore_auth: str = None,
-            appstore_sessionid: str = None,
+            auth_type: AuthType = AuthType.PASSWORD,
+            appstore_access_token: str = None,
             jwt_refresh_leeway_seconds: int = 60
         ):
-        if (appstore_auth is None) ^ (appstore_sessionid is None):
-            raise ValueError("appstore_auth and appstore_sessionid must both be defined or both None")
-        
         self.api_url = api_url
         self.user_onyen = user_onyen
         self.user_autogen_password = user_autogen_password
-        self.appstore_auth = appstore_auth
-        self.appstore_sessionid = appstore_sessionid
+        self.auth_type = auth_type
+        self.appstore_access_token = appstore_access_token
         self.jwt_refresh_leeway_seconds = jwt_refresh_leeway_seconds
 
         self._access_token = None
@@ -145,15 +147,16 @@ class Api:
     """ Auth """
     # This is an API endpoint; it is marked as private because auth is handled internally.
     async def _login(self):
-        if self.appstore_sessionid is None:
+        if self.auth_type == AuthType.PASSWORD:
             res = await self._post("login", verify_credentials=False, json={
                 "onyen": self.user_onyen,
                 "autogen_password": self.user_autogen_password
             })
-        else:
+        elif self.auth_type in (AuthType.APPSTORE_INSTRUCTOR, AuthType.APPSTORE_STUDENT):
+            _, user_type = self.auth_type.value.split(":")
             res = await self._post("login/appstore", verify_credentials=False, json={
-                "user_type": self.appstore_auth
-            }, headers={ "Cookie": f"sessionid={ self.appstore_sessionid }" })
+                "user_type": user_type
+            }, headers={ "APPSTORE-ACCESS-TOKEN": self.appstore_access_token })
         self.access_token = res.get("access_token")
         self.refresh_token = res.get("refresh_token")
 
