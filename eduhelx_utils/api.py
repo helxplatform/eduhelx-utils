@@ -178,6 +178,11 @@ class Api:
             "name": name,
             "key": key
         })
+
+    async def remove_ssh_key(self, key_name: str):
+        return await self._delete("login/gitea/ssh", params={
+            "key_name": key_name
+        })
     
 
     """ Submissions """
