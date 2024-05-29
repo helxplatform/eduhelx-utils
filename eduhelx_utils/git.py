@@ -72,7 +72,7 @@ def init_repository(path="./"):
     (out, err, exit_code) = execute(["git", "init"], cwd=path)
 
 def ff_merge(branch_name: str, path="./"):
-    (out, err, exit_code) = execute(["git", "merge", "--ff-only", branch_name])
+    (out, err, exit_code) = execute(["git", "merge", "--ff-only", branch_name], cwd=path)
     last_line = err.splitlines()[-1]
     if last_line.startswith("fatal:"):
         raise GitException(err)
