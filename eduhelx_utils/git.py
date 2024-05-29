@@ -76,7 +76,7 @@ def ff_merge(branch_name: str, path="./"):
     last_line = err.splitlines()[-1]
     if last_line.startswith("fatal:"):
         raise GitException(err)
-    if last_line.startswith("merge:"):
+    if err.startswith("merge:") or err.startswith("error:"):
         raise GitException(err)
 
 def fetch_repository(remote_url_or_name: str, path="./"):
