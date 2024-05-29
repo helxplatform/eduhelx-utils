@@ -71,6 +71,12 @@ def clone_repository(remote_url: str, remote_name="origin", path="./"):
 def init_repository(path="./"):
     (out, err, exit_code) = execute(["git", "init"], cwd=path)
 
+def ff_merge(branch_name: str, path="./"):
+    (out, err, exit_code) = execute(["git", "merge", "--ff-only", branch_name])
+    last_line = err.splitlines()[-1]
+    if last_line.startswith("fatal:"):
+        raise GitException(err)
+
 def fetch_repository(remote_url_or_name: str, path="./"):
     (out, err, exit_code) = execute(["git", "fetch", remote_url_or_name], cwd=path)
     if err.startswith("fatal:"):
