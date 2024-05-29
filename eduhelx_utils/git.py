@@ -82,6 +82,8 @@ def checkout(branch_name: str, new_branch=False, path="./"):
     ], cwd=path)
     if err.startswith("Switched"):
         return
+    elif err.startswith("Already on"):
+        return
     elif err.startswith("fatal: not a git repository"):
         raise InvalidGitRepositoryException()
     else:
