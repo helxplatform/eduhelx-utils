@@ -252,5 +252,5 @@ class Api:
     
 
     """ LMS """
-    async def downsync(self):
+    async def lms_downsync(self):
         return await self._post("lms/downsync")
