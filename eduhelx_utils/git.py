@@ -72,13 +72,19 @@ def clone_repository(remote_url: str, remote_name="origin", path="./"):
 def init_repository(path="./"):
     (out, err, exit_code) = execute(["git", "init"], cwd=path)
 
-def merge(branch_name: str, path="./"):
-    (out, err, exit_code) = execute(["git", "merge", "--no-ff", "--no-edit", branch_name], cwd=path)
+# Returns files that encountered a merge conflict.
+def merge(branch_name: str, commit=True, path="./") -> list[str]:
+    args = ["git", "merge", "--no-ff", "--no-edit"]
+    if not commit: args.append("--no-commit")
+    (out, err, exit_code) = execute([*args, branch_name], cwd=path)
     last_line = err.splitlines()[-1]
     if last_line.startswith("fatal:"):
         raise GitException(err)
     if err.startswith("merge:") or err.startswith("error:"):
         raise GitException(err)
+    
+def abort_merge(path="./") -> None:
+    (out, err, exit_code) = execute(["git", "merge", "--abort"])
 
 def delete_local_branch(branch_name: str, force=False, path="./"):
     (out, err, exit_code) = execute(["git", "branch", "-D" if force else "-d", branch_name], cwd=path)
@@ -94,10 +100,12 @@ def fetch_repository(remote_url_or_name: str, path="./"):
     if err.startswith("fatal:"):
         raise GitException(err)
     
-def checkout(branch_name: str, new_branch=False, path="./"):
-    (out, err, exit_code) = execute([
-        i for i in ["git", "checkout", "-b" if new_branch else None, branch_name] if i is not None
-    ], cwd=path)
+# Be very careful when using force, as it can discard local changes.
+def checkout(branch_name: str, new_branch=False, force=False, path="./"):
+    args = ["git", "checkout"]
+    if new_branch: args.append("-b")
+    if force: args.append("--force")
+    (out, err, exit_code) = execute([*args, branch_name], cwd=path)
     if err.startswith("Switched"):
         return
     elif err.startswith("Already on"):
