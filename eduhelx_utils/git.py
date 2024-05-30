@@ -45,8 +45,9 @@ def get_commit_info(commit_id: str, path="./"):
         "committer_email": committer_email
     }
 
-def get_head_commit_id(path="./") -> str:
-    (out, err, exit_code) = execute(["git", "rev-parse", "HEAD"], cwd=path)
+def get_head_commit_id(branch_name: str=None, path="./") -> str:
+    if branch_name is None: branch_name = "HEAD"
+    (out, err, exit_code) = execute(["git", "rev-parse", branch_name], cwd=path)
     if err != "":
         # Note: this will also error if ran on a repository with 0 commits,
         # although that should never be a use-case so it should be alright.
@@ -71,13 +72,22 @@ def clone_repository(remote_url: str, remote_name="origin", path="./"):
 def init_repository(path="./"):
     (out, err, exit_code) = execute(["git", "init"], cwd=path)
 
-def ff_merge(branch_name: str, path="./"):
-    (out, err, exit_code) = execute(["git", "merge", "--ff-only", branch_name], cwd=path)
+def merge(branch_name: str, path="./"):
+    (out, err, exit_code) = execute(["git", "merge", "--no-ff", "--no-edit", branch_name], cwd=path)
     last_line = err.splitlines()[-1]
     if last_line.startswith("fatal:"):
         raise GitException(err)
     if err.startswith("merge:") or err.startswith("error:"):
         raise GitException(err)
+
+def delete_local_branch(branch_name: str, force=False, path="./"):
+    (out, err, exit_code) = execute(["git", "branch", "-D" if force else "-d", branch_name], cwd=path)
+    if err.endswith("not found"):
+        # We don't want to throw if deleting a non-existent branch
+        return
+    if err.startswith("error:"):
+        raise GitException(err)
+    
 
 def fetch_repository(remote_url_or_name: str, path="./"):
     (out, err, exit_code) = execute(["git", "fetch", remote_url_or_name], cwd=path)
