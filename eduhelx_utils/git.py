@@ -83,7 +83,7 @@ def get_commit_parents(commit_id: str, path="./") -> list[str]:
         raise GitException(err)
     return out.splitlines()
 
-# Returns files that encountered a merge conflict.
+# Returns paths (relative to repository root) to files that encountered a merge conflict.
 def merge(branch_name: str, ff_only=False, commit=True, path="./") -> list[str]:
     args = ["git", "merge", "--ff-only" if ff_only else "--no-ff", "--no-edit"]
     if not commit: args.append("--no-commit")
@@ -93,7 +93,9 @@ def merge(branch_name: str, ff_only=False, commit=True, path="./") -> list[str]:
         raise GitException(err)
     if err.startswith("merge:") or err.startswith("error:"):
         raise GitException(err)
-    return []
+    
+    (out, err, exit_code) = execute(["git", "diff", "--name-only", "--diff-filter", "U"], cwd=path)
+    return out.splitlines()
     
 def abort_merge(path="./") -> None:
     (out, err, exit_code) = execute(["git", "merge", "--abort"])
