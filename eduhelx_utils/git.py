@@ -72,16 +72,28 @@ def clone_repository(remote_url: str, remote_name="origin", path="./"):
 def init_repository(path="./"):
     (out, err, exit_code) = execute(["git", "init"], cwd=path)
 
+def is_ancestor_commit(descendant: str, ancestor: str, path="./"):
+    (out, err, exit_code) = execute(["git", "rev-list", descendant], cwd=path)
+    return ancestor in out.splitlines()
+
+# Only a single parent except for merge commits
+def get_commit_parents(commit_id: str, path="./") -> list[str]:
+    (out, err, exit_code) = execute(["git", "rev-parse", commit_id + "^@"], cwd=path)
+    if err.startswith("fatal:"):
+        raise GitException(err)
+    return out.splitlines()
+
 # Returns files that encountered a merge conflict.
-def merge(branch_name: str, commit=True, path="./") -> list[str]:
-    args = ["git", "merge", "--no-ff", "--no-edit"]
+def merge(branch_name: str, ff_only=False, commit=True, path="./") -> list[str]:
+    args = ["git", "merge", "--ff-only" if ff_only else "--no-ff", "--no-edit"]
     if not commit: args.append("--no-commit")
     (out, err, exit_code) = execute([*args, branch_name], cwd=path)
-    last_line = err.splitlines()[-1]
+    last_line =  err.splitlines()[-1] if len(err) > 0 else ""
     if last_line.startswith("fatal:"):
         raise GitException(err)
     if err.startswith("merge:") or err.startswith("error:"):
         raise GitException(err)
+    return []
     
 def abort_merge(path="./") -> None:
     (out, err, exit_code) = execute(["git", "merge", "--abort"])
