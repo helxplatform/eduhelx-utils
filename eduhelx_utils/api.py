@@ -268,3 +268,7 @@ class Api:
     """ LMS """
     async def lms_downsync(self):
         return await self._post("lms/downsync")
+    
+    """ Settings """
+    async def get_settings(self):
+        return await self._get("settings")
