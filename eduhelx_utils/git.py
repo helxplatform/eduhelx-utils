@@ -111,7 +111,7 @@ def delete_local_branch(branch_name: str, force=False, path="./"):
 
 def fetch_repository(remote_url_or_name: str, path="./"):
     (out, err, exit_code) = execute(["git", "fetch", remote_url_or_name], cwd=path)
-    if "fatal:" in err:
+    if any([line.startswith("fatal:") for line in err.splitlines()]):
         raise GitException(err)
     
 # Be very careful when using force, as it can discard local changes.
