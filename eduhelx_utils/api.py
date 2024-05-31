@@ -249,3 +249,8 @@ class Api:
     """ Course """
     async def get_course(self):
         return await self._get("course")
+    
+
+    """ LMS """
+    async def lms_downsync(self):
+        return await self._post("lms/downsync")
