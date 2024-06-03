@@ -45,8 +45,9 @@ def get_commit_info(commit_id: str, path="./"):
         "committer_email": committer_email
     }
 
-def get_head_commit_id(path="./") -> str:
-    (out, err, exit_code) = execute(["git", "rev-parse", "HEAD"], cwd=path)
+def get_head_commit_id(branch_name: str=None, path="./") -> str:
+    if branch_name is None: branch_name = "HEAD"
+    (out, err, exit_code) = execute(["git", "rev-parse", branch_name], cwd=path)
     if err != "":
         # Note: this will also error if ran on a repository with 0 commits,
         # although that should never be a use-case so it should be alright.
@@ -71,16 +72,57 @@ def clone_repository(remote_url: str, remote_name="origin", path="./"):
 def init_repository(path="./"):
     (out, err, exit_code) = execute(["git", "init"], cwd=path)
 
-def fetch_repository(remote_url_or_name: str, path="./"):
-    (out, err, exit_code) = execute(["git", "fetch", remote_url_or_name], cwd=path)
+def is_ancestor_commit(descendant: str, ancestor: str, path="./"):
+    (out, err, exit_code) = execute(["git", "rev-list", descendant], cwd=path)
+    return ancestor in out.splitlines()
+
+# Only a single parent except for merge commits
+def get_commit_parents(commit_id: str, path="./") -> list[str]:
+    (out, err, exit_code) = execute(["git", "rev-parse", commit_id + "^@"], cwd=path)
     if err.startswith("fatal:"):
         raise GitException(err)
+    return out.splitlines()
+
+# Returns paths (relative to repository root) to files that encountered a merge conflict.
+def merge(branch_name: str, ff_only=False, commit=True, path="./") -> list[str]:
+    args = ["git", "merge", "--ff-only" if ff_only else "--no-ff", "--no-edit"]
+    if not commit: args.append("--no-commit")
+    (out, err, exit_code) = execute([*args, branch_name], cwd=path)
+    last_line =  err.splitlines()[-1] if len(err) > 0 else ""
+    if last_line.startswith("fatal:"):
+        raise GitException(err)
+    if err.startswith("merge:") or err.startswith("error:"):
+        raise GitException(err)
     
-def checkout(branch_name: str, new_branch=False, path="./"):
-    (out, err, exit_code) = execute([
-        i for i in ["git", "checkout", "-b" if new_branch else None, branch_name] if i is not None
-    ], cwd=path)
+    (out, err, exit_code) = execute(["git", "diff", "--name-only", "--diff-filter", "U"], cwd=path)
+    return out.splitlines()
+    
+def abort_merge(path="./") -> None:
+    (out, err, exit_code) = execute(["git", "merge", "--abort"])
+
+def delete_local_branch(branch_name: str, force=False, path="./"):
+    (out, err, exit_code) = execute(["git", "branch", "-D" if force else "-d", branch_name], cwd=path)
+    if err.endswith("not found"):
+        # We don't want to throw if deleting a non-existent branch
+        return
+    if err.startswith("error:"):
+        raise GitException(err)
+    
+
+def fetch_repository(remote_url_or_name: str, path="./"):
+    (out, err, exit_code) = execute(["git", "fetch", remote_url_or_name], cwd=path)
+    if any([line.startswith("fatal:") for line in err.splitlines()]):
+        raise GitException(err)
+    
+# Be very careful when using force, as it can discard local changes.
+def checkout(branch_name: str, new_branch=False, force=False, path="./"):
+    args = ["git", "checkout"]
+    if new_branch: args.append("-b")
+    if force: args.append("--force")
+    (out, err, exit_code) = execute([*args, branch_name], cwd=path)
     if err.startswith("Switched"):
+        return
+    elif err.startswith("Already on"):
         return
     elif err.startswith("fatal: not a git repository"):
         raise InvalidGitRepositoryException()
