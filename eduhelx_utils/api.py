@@ -7,6 +7,7 @@ Refer to Grader API /docs for full documentation on API endpoints.
 import jwt
 import time
 import httpx
+from io import BytesIO
 from enum import Enum
 from ._version import __version__
 
@@ -268,3 +269,8 @@ class Api:
     """ LMS """
     async def lms_downsync(self):
         return await self._post("lms/downsync")
+    
+    async def grade_assignment(self, assignment_id: str, grade_data: str):
+        return await self._post(f"lms/grades/{ assignment_id }", json={
+            "grades": grade_data
+        })
