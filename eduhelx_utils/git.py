@@ -201,8 +201,9 @@ def commit(summary: str, description: str | None = None, path="./") -> str:
 
 def push(remote_name: str, branch_name: str, path="./"):
     (out, err, exit_code) = execute(["git", "push", remote_name, branch_name], cwd=path)
-    if err.startswith("fatal: not a git repository"):
+    if "fatal: not a git repository" in err:
         raise InvalidGitRepositoryException()
-    elif err.startswith("fatal:"):
+    elif "fatal:" in err:
         raise GitException(err)
-    
+    elif "error:" in err:
+        raise GitException(err)
