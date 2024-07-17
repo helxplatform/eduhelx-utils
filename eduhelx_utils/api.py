@@ -228,6 +228,12 @@ class Api:
     async def update_assignment(self, name: str, **patch_fields):
         return await self._patch(f"assignments/{name}", json=patch_fields)
     
+    async def grade_assignment(self, name: str, master_notebook_content: str, otter_config_content: str):
+        return await self._post(f"assignments/{name}/grade", json={
+            "master_notebook_content": master_notebook_content,
+            "otter_config_content": otter_config_content
+        })
+    
     
     """ Users """
     async def get_my_user(self):
