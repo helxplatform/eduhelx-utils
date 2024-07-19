@@ -113,7 +113,27 @@ class Api:
         elif response.status_code == 403:
             raise ForbiddenException(response, "You lack the permission to make this API request")
         else:
+            self._handle_error_codes(response)
             raise APIException(response, f"API request to { response.request.url } failed with status code { response.status_code } { response.text }")
+
+    def _handle_error_codes(response: httpx.Response):
+        print(response)
+        if response.status_code == 404 and response.error_code:
+            match response.error_code:
+                case "APPSTORE__USER_NOT_FOUND": 
+                    raise APIException(response, f"User not found")
+                case "ASSIGNMENT__NOT_FOUND":
+                    raise APIException(response, f"Failed to fetch assignment")
+                case "Not Found":
+                    raise APIException(response, f"Resource not found")
+                case "LMS__NO_ASSIGNMENT_FETCHED":
+                    raise APIException(response, f"Failed to fetch assignment")
+                case "LMS__NO_COURSE_FETCHED":
+                    raise APIException(response, f"Failed to fetch course")
+                case "LMS__NO_STUDENTS_FETCHED":
+                    raise APIException(response, f"Failed to fetch students")
+                case "LMS__USER_NOT_FOUND":
+                    raise APIException(response, f"User's onyen doesn't match a user in LMS")
 
     async def _make_request(self, method: str, endpoint: str, verify_credentials=True, headers={}, **kwargs):
         if verify_credentials: await self._ensure_access_token()
