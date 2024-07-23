@@ -186,10 +186,6 @@ class Api:
     
 
     """ Submissions """
-    async def get_my_submissions(self, assignment_id: int):
-        return await self._get("submissions/self", params={
-            "assignment_id": assignment_id
-        })
     async def get_submissions(self, assignment_id: int, student_onyen: str | None=None):
         params = {
             "assignment_id": assignment_id
@@ -197,8 +193,16 @@ class Api:
         if student_onyen is not None: params["student_onyen"] = student_onyen
         return await self._get("submissions", params=params)
     
+    async def get_my_submissions(self, assignment_id: int):
+        return await self._get("submissions/self", params={
+            "assignment_id": assignment_id
+        })
+    
+    async def get_submission(self, submission_id: int):
+        return await self._get(f"submissions/{ submission_id }")
+    
     async def get_active_submission(self, onyen: str, assignment_id: int):
-        return await self._get("active_submission", params={
+        return await self._get("submissions/active", params={
             "onyen": onyen,
             "assignment_id": assignment_id
         })
@@ -210,13 +214,11 @@ class Api:
         })
     
     async def download_submission(self, submission_id: int):
-        return await self._get("submissions/download", params={
-            "submission_id": submission_id
-        })
+        return await self._get(f"submissions/{ submission_id }/download")
     
-    async def download_active_submission(self, student_id: int, assigment_id: int):
-        return await self._get("submissions/download/active", params={
-            "student_id": student_id,
+    async def download_active_submission(self, onyen: str, assigment_id: int):
+        return await self._get("submissions/active/download", params={
+            "onyen": onyen,
             "assignment_id": assigment_id
         })
     
