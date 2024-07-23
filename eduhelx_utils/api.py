@@ -197,16 +197,27 @@ class Api:
         if student_onyen is not None: params["student_onyen"] = student_onyen
         return await self._get("submissions", params=params)
     
-    async def get_latest_submission(self, onyen: str, assignment_id: int):
-        return await self._get("latest_submission", params={
+    async def get_active_submission(self, onyen: str, assignment_id: int):
+        return await self._get("active_submission", params={
             "onyen": onyen,
             "assignment_id": assignment_id
         })
 
-    async def create_submission(self, assignment_id: str, commit_id: str):
+    async def create_submission(self, assignment_id: int, commit_id: str):
         return await self._post("submissions", json={
             "assignment_id": assignment_id,
             "commit_id": commit_id
+        })
+    
+    async def download_submission(self, submission_id: int):
+        return await self._get("submissions/download", params={
+            "submission_id": submission_id
+        })
+    
+    async def download_active_submission(self, student_id: int, assigment_id: int):
+        return await self._get("submissions/download/active", params={
+            "student_id": student_id,
+            "assignment_id": assigment_id
         })
     
     
@@ -216,6 +227,12 @@ class Api:
     
     async def update_assignment(self, name: str, **patch_fields):
         return await self._patch(f"assignments/{name}", json=patch_fields)
+    
+    async def grade_assignment(self, name: str, master_notebook_content: str, otter_config_content: str):
+        return await self._post(f"assignments/{name}/grade", json={
+            "master_notebook_content": master_notebook_content,
+            "otter_config_content": otter_config_content
+        })
     
     
     """ Users """

@@ -83,6 +83,14 @@ def get_commit_parents(commit_id: str, path="./") -> list[str]:
         raise GitException(err)
     return out.splitlines()
 
+def diff_status(commit_id: str | None=None, diff_filter: str | None=None, path="./") -> list[str]:
+    args = ["git", "diff", "--name-only"]
+    if diff_filter is not None: args += ["--diff-filter", diff_filter]
+    if commit_id is not None: args.append(commit_id)
+    (out, err, exit_code) = execute(args, cwd=path)
+    if "Not a git repository" in err: return InvalidGitRepositoryException()
+    return out.splitlines()
+
 # Returns paths (relative to repository root) to files that encountered a merge conflict.
 def merge(branch_name: str, ff_only=False, commit=True, path="./") -> list[str]:
     args = ["git", "merge", "--ff-only" if ff_only else "--no-ff", "--no-edit"]
@@ -94,8 +102,7 @@ def merge(branch_name: str, ff_only=False, commit=True, path="./") -> list[str]:
     if err.startswith("merge:") or err.startswith("error:"):
         raise GitException(err)
     
-    (out, err, exit_code) = execute(["git", "diff", "--name-only", "--diff-filter", "U"], cwd=path)
-    return out.splitlines()
+    return diff_status(diff_filter="U", path=path)
     
 def abort_merge(path="./") -> None:
     (out, err, exit_code) = execute(["git", "merge", "--abort"])
@@ -109,10 +116,11 @@ def delete_local_branch(branch_name: str, force=False, path="./"):
         raise GitException(err)
     
 
-def fetch_repository(remote_url_or_name: str, path="./"):
-    (out, err, exit_code) = execute(["git", "fetch", remote_url_or_name], cwd=path)
+def fetch_repository(remote_url_or_name: str, path="./") -> list[tuple[str, str, str, str]]:
+    (out, err, exit_code) = execute(["git", "fetch", "--porcelain", remote_url_or_name], cwd=path)
     if any([line.startswith("fatal:") for line in err.splitlines()]):
         raise GitException(err)
+    return [line.split(" ") for line in out.splitlines()]
     
 # Be very careful when using force, as it can discard local changes.
 def checkout(branch_name: str, new_branch=False, force=False, path="./"):
@@ -120,14 +128,9 @@ def checkout(branch_name: str, new_branch=False, force=False, path="./"):
     if new_branch: args.append("-b")
     if force: args.append("--force")
     (out, err, exit_code) = execute([*args, branch_name], cwd=path)
-    if err.startswith("Switched"):
-        return
-    elif err.startswith("Already on"):
-        return
-    elif err.startswith("fatal: not a git repository"):
+    if "error:" in err: raise GitException(err)
+    elif "fatal: not a git repository" in err:
         raise InvalidGitRepositoryException()
-    else:
-        raise GitException(err)
 
 def get_repo_name(remote_name="origin", path="./") -> str:
     (out, err, exit_code) = execute(["git", "config", "--get", f"remote.{remote_name}.url"], cwd=path)
