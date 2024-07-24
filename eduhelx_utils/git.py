@@ -63,7 +63,7 @@ def get_tail_commit_id(path="./") -> str:
     return out
     
 def clone_repository(remote_url: str, remote_name="origin", path="./"):
-    (out, err, exit_code) = execute(["git", "clone", remote_url, path, "--origin", remote_name])
+    (out, err, exit_code) = execute(["git", "clone", remote_url, path, "--origin", remote_name], cwd=path)
     # Git clone outputs human-useful information to stderr.
     last_line = err.split("\n")[-1]
     if last_line.startswith("fatal:"):
@@ -105,7 +105,7 @@ def merge(branch_name: str, ff_only=False, commit=True, path="./") -> list[str]:
     return diff_status(diff_filter="U", path=path)
     
 def abort_merge(path="./") -> None:
-    (out, err, exit_code) = execute(["git", "merge", "--abort"])
+    (out, err, exit_code) = execute(["git", "merge", "--abort"], cwd=path)
 
 def delete_local_branch(branch_name: str, force=False, path="./"):
     (out, err, exit_code) = execute(["git", "branch", "-D" if force else "-d", branch_name], cwd=path)
@@ -139,7 +139,7 @@ def get_repo_name(remote_name="origin", path="./") -> str:
     # Technically, a git remote URL can contain quotes, so it could break out of the quotations around `out`.
     # However, since execute is not executing in shell mode, it can't perform command substitution so there isn't
     # any risk involved here.
-    (out, err, exit_code) = execute(["basename", "-s", ".git", out])
+    (out, err, exit_code) = execute(["basename", "-s", ".git", out], cwd=path)
     if err != "":
         raise GitException(err)
     return out
