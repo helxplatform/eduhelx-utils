@@ -91,6 +91,28 @@ def diff_status(commit_id: str | None=None, diff_filter: str | None=None, path="
     if "Not a git repository" in err: return InvalidGitRepositoryException()
     return out.splitlines()
 
+def stash_changes(message: str | None = None, include_untracked=False, path="./"):
+    args = ["git", "stash", "push"]
+    if include_untracked: args.append("--include-untracked")
+    if message is not None: args += ["-m", message]
+    
+    (out, err, exit_code) = execute(args, cwd=path)
+    if "error:" in err or "fatal:" in err: raise GitException(err)
+
+def get_stashed_files(include_untracked=False, path="./") -> list[str]:
+    args = ["git", "stash", "show", "--name-only"]
+    if include_untracked: args.append("--include-untracked")
+
+    (out, err, exit_code) = execute(args, cwd=path)
+    if "error:" in err or "fatal:" in err: raise GitException(err)
+    return out.splitlines()
+    
+
+def pop_stash(path="./"):
+    (out, err, exit_code) = execute(["git", "stash", "pop"], cwd=path)
+    if "error:" in err or "fatal:" in err: raise GitException(err)
+
+
 # Returns paths (relative to repository root) to files that encountered a merge conflict.
 def merge(branch_name: str, ff_only=False, commit=True, path="./") -> list[str]:
     args = ["git", "merge", "--ff-only" if ff_only else "--no-ff", "--no-edit"]
@@ -164,6 +186,17 @@ def reset(files: str | list[str], path="./") -> None:
     (out, err, exit_code) = execute(["git", "reset", *files], cwd=path)
     if err != "":
         raise InvalidGitRepositoryException()
+    
+def restore(files: str | list[str], source: str | None=None, staged=False, worktree=False, path="./") -> None:
+    if isinstance(files, str): files = [files]
+
+    args = ["git", "restore"]
+    if staged: args.append("--staged")
+    if worktree: args.append("--worktree")
+    if source is not None: args += ["--source", source]
+
+    (out, err, exit_code) = execute([*args, *files], cwd=path)
+    if "error:" in err or "fatal:" in err: raise GitException(err)
 
 # This is named `paths` since git status may return untracked directories as well as files when untracked=False.
 def get_modified_paths(untracked=False, path="./") -> list[str]:
@@ -189,9 +222,15 @@ def get_modified_paths(untracked=False, path="./") -> list[str]:
     return changed_files
 
 
-def commit(summary: str, description: str | None = None, path="./") -> str:
-    description_args = ["-m", description] if description is not None else []
-    (out, err, exit_code) = execute(["git", "commit", "--allow-empty", "-m", summary, *description_args], cwd=path)
+def commit(summary: str, description: str | None = None, no_edit=True, path="./") -> str:
+    args = ["git", "commit", "--allow-empty"]
+
+    if no_edit: args.append("--no-edit")
+    if summary is not None:
+        args += ["-m", summary]
+        if description is not None: args += ["-m", description]
+
+    (out, err, exit_code) = execute(args, cwd=path)
 
     if err != "":
         raise InvalidGitRepositoryException()
