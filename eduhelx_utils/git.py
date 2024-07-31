@@ -198,6 +198,17 @@ def restore(files: str | list[str], source: str | None=None, staged=False, workt
     (out, err, exit_code) = execute([*args, *files], cwd=path)
     if "error:" in err or "fatal:" in err: raise GitException(err)
 
+def rm(files: str | list[str], recursive=False, cached=False, force=False, path="./") -> None:
+    if isinstance(files, str): files = [files]
+    
+    args = ["git", "rm"]
+    if recursive: args.append("-r")
+    if cached: args.append("--cached")
+    if force: args.append("--force") # bypass up-to-date check
+
+    (out, err, exit_code) = execute([*args, *files], cwd=path)
+    if "error:" in err or "fatal:" in err: raise GitException(err)
+
 # This is named `paths` since git status may return untracked directories as well as files when untracked=False.
 def get_modified_paths(untracked=False, path="./") -> list[str]:
     args = ["git", "status", "--porcelain=v1"]
