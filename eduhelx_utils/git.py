@@ -63,7 +63,7 @@ def get_tail_commit_id(path="./") -> str:
     return out
     
 def clone_repository(remote_url: str, remote_name="origin", path="./"):
-    (out, err, exit_code) = execute(["git", "clone", remote_url, path, "--origin", remote_name])
+    (out, err, exit_code) = execute(["git", "clone", remote_url, path, "--origin", remote_name], cwd=path)
     # Git clone outputs human-useful information to stderr.
     last_line = err.split("\n")[-1]
     if last_line.startswith("fatal:"):
@@ -91,6 +91,28 @@ def diff_status(commit_id: str | None=None, diff_filter: str | None=None, path="
     if "Not a git repository" in err: return InvalidGitRepositoryException()
     return out.splitlines()
 
+def stash_changes(message: str | None = None, include_untracked=False, path="./"):
+    args = ["git", "stash", "push"]
+    if include_untracked: args.append("--include-untracked")
+    if message is not None: args += ["-m", message]
+    
+    (out, err, exit_code) = execute(args, cwd=path)
+    if "error:" in err or "fatal:" in err: raise GitException(err)
+
+def get_stashed_files(include_untracked=False, path="./") -> list[str]:
+    args = ["git", "stash", "show", "--name-only"]
+    if include_untracked: args.append("--include-untracked")
+
+    (out, err, exit_code) = execute(args, cwd=path)
+    if "error:" in err or "fatal:" in err: raise GitException(err)
+    return out.splitlines()
+    
+
+def pop_stash(path="./"):
+    (out, err, exit_code) = execute(["git", "stash", "pop"], cwd=path)
+    if "error:" in err or "fatal:" in err: raise GitException(err)
+
+
 # Returns paths (relative to repository root) to files that encountered a merge conflict.
 def merge(branch_name: str, ff_only=False, commit=True, path="./") -> list[str]:
     args = ["git", "merge", "--ff-only" if ff_only else "--no-ff", "--no-edit"]
@@ -105,7 +127,7 @@ def merge(branch_name: str, ff_only=False, commit=True, path="./") -> list[str]:
     return diff_status(diff_filter="U", path=path)
     
 def abort_merge(path="./") -> None:
-    (out, err, exit_code) = execute(["git", "merge", "--abort"])
+    (out, err, exit_code) = execute(["git", "merge", "--abort"], cwd=path)
 
 def delete_local_branch(branch_name: str, force=False, path="./"):
     (out, err, exit_code) = execute(["git", "branch", "-D" if force else "-d", branch_name], cwd=path)
@@ -139,7 +161,7 @@ def get_repo_name(remote_name="origin", path="./") -> str:
     # Technically, a git remote URL can contain quotes, so it could break out of the quotations around `out`.
     # However, since execute is not executing in shell mode, it can't perform command substitution so there isn't
     # any risk involved here.
-    (out, err, exit_code) = execute(["basename", "-s", ".git", out])
+    (out, err, exit_code) = execute(["basename", "-s", ".git", out], cwd=path)
     if err != "":
         raise GitException(err)
     return out
@@ -164,6 +186,28 @@ def reset(files: str | list[str], path="./") -> None:
     (out, err, exit_code) = execute(["git", "reset", *files], cwd=path)
     if err != "":
         raise InvalidGitRepositoryException()
+    
+def restore(files: str | list[str], source: str | None=None, staged=False, worktree=False, path="./") -> None:
+    if isinstance(files, str): files = [files]
+
+    args = ["git", "restore"]
+    if staged: args.append("--staged")
+    if worktree: args.append("--worktree")
+    if source is not None: args += ["--source", source]
+
+    (out, err, exit_code) = execute([*args, *files], cwd=path)
+    if "error:" in err or "fatal:" in err: raise GitException(err)
+
+def rm(files: str | list[str], recursive=False, cached=False, force=False, path="./") -> None:
+    if isinstance(files, str): files = [files]
+    
+    args = ["git", "rm"]
+    if recursive: args.append("-r")
+    if cached: args.append("--cached")
+    if force: args.append("--force") # bypass up-to-date check
+
+    (out, err, exit_code) = execute([*args, *files], cwd=path)
+    if "error:" in err or "fatal:" in err: raise GitException(err)
 
 # This is named `paths` since git status may return untracked directories as well as files when untracked=False.
 def get_modified_paths(untracked=False, path="./") -> list[str]:
@@ -189,9 +233,15 @@ def get_modified_paths(untracked=False, path="./") -> list[str]:
     return changed_files
 
 
-def commit(summary: str, description: str | None = None, path="./") -> str:
-    description_args = ["-m", description] if description is not None else []
-    (out, err, exit_code) = execute(["git", "commit", "--allow-empty", "-m", summary, *description_args], cwd=path)
+def commit(summary: str, description: str | None = None, no_edit=True, path="./") -> str:
+    args = ["git", "commit", "--allow-empty"]
+
+    if no_edit: args.append("--no-edit")
+    if summary is not None:
+        args += ["-m", summary]
+        if description is not None: args += ["-m", description]
+
+    (out, err, exit_code) = execute(args, cwd=path)
 
     if err != "":
         raise InvalidGitRepositoryException()
