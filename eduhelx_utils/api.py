@@ -43,7 +43,8 @@ class Api:
             user_autogen_password: str = None,
             auth_type: AuthType = AuthType.PASSWORD,
             appstore_access_token: str = None,
-            jwt_refresh_leeway_seconds: int = 60
+            jwt_refresh_leeway_seconds: int = 60,
+            timeout: int = 30
         ):
         self.api_url = api_url
         self.user_onyen = user_onyen
@@ -60,7 +61,8 @@ class Api:
             base_url=f"{ self.api_url }{ '/' if not self.api_url.endswith('/') else '' }api/v1/",
             headers={
                 "User-Agent": f"eduhelx_utils/{__version__}"
-            }
+            },
+            timeout=httpx.Timeout(timeout)
         )
 
     @property
