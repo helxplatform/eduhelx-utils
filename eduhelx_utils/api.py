@@ -209,10 +209,11 @@ class Api:
             "assignment_id": assignment_id
         })
 
-    async def create_submission(self, assignment_id: int, commit_id: str):
+    async def create_submission(self, assignment_id: int, commit_id: str, student_notebook_content: str):
         return await self._post("submissions", json={
             "assignment_id": assignment_id,
-            "commit_id": commit_id
+            "commit_id": commit_id,
+            "student_notebook_content": student_notebook_content
         })
     
     async def download_submission(self, submission_id: int):
