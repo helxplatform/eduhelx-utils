@@ -7,6 +7,7 @@ Refer to Grader API /docs for full documentation on API endpoints.
 import jwt
 import time
 import httpx
+from uuid import UUID
 from enum import Enum
 from typing import TypedDict
 from ._version import __version__
@@ -304,3 +305,10 @@ class Api:
     """ Settings """
     async def get_settings(self):
         return await self._get("settings")
+    
+    """ Jobs """
+    async def get_job(self, job_id: UUID):
+        return await self._get(f"jobs/{ job_id }")
+    
+    async def get_job_status(self, job_id: UUID):
+        return await self._get(f"jobs/{ job_id }/status")
