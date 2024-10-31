@@ -8,12 +8,19 @@ import jwt
 import time
 import httpx
 from enum import Enum
+from typing import TypedDict
 from ._version import __version__
 
 class AuthType(Enum):
     APPSTORE_INSTRUCTOR = "appstore:instructor"
     APPSTORE_STUDENT = "appstore:student"
     PASSWORD = "password"
+
+class ManualGrade(TypedDict):
+    submission_id: int
+    # Between [0,1]
+    grade_proportion: float
+    comments: str | None
 
 class APIException(Exception):
     def __init__(self, response, message):
@@ -209,10 +216,11 @@ class Api:
             "assignment_id": assignment_id
         })
 
-    async def create_submission(self, assignment_id: int, commit_id: str):
+    async def create_submission(self, assignment_id: int, commit_id: str, student_notebook_content: str):
         return await self._post("submissions", json={
             "assignment_id": assignment_id,
-            "commit_id": commit_id
+            "commit_id": commit_id,
+            "student_notebook_content": student_notebook_content
         })
     
     async def download_submission(self, submission_id: int):
@@ -237,6 +245,9 @@ class Api:
             "master_notebook_content": master_notebook_content,
             "otter_config_content": otter_config_content
         })
+    
+    async def grade_assignment_manual(self, name: str, grade_data: list[ManualGrade]):
+        return await self._post(f"assignments/{name}/grade_manual", json=grade_data)
     
     
     """ Users """
